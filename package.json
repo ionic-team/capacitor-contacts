@@ -7,13 +7,15 @@
   "types": "dist/esm/index.d.ts",
   "unpkg": "dist/plugin.js",
   "files": [
-    "android/src/main/",
+    "CapacitorContacts.podspec",
+    "LICENSE",
+    "NOTICE",
+    "Package.swift",
     "android/build.gradle",
+    "android/src/main/",
     "dist/",
     "ios/Sources",
-    "ios/Tests",
-    "Package.swift",
-    "CapacitorContacts.podspec"
+    "ios/Tests"
   ],
   "author": "OutSystems <support@outsystems.com>",
   "license": "Apache-2.0",
@@ -43,7 +45,9 @@
     "build": "npm run clean && npm run docgen && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "publish:cocoapod": "pod trunk push ./CapacitorContacts.podspec --allow-warnings"
   },
   "devDependencies": {
     "@capacitor/android": "^8.0.0",
@@ -59,7 +63,12 @@
     "rimraf": "^6.1.0",
     "rollup": "^4.53.2",
     "swiftlint": "^2.0.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.2",
+    "@semantic-release/npm": "^13.1.2",
+    "semantic-release": "^25.0.2"
   },
   "peerDependencies": {
     "@capacitor/core": ">=8.0.0"
@@ -76,5 +85,8 @@
     "android": {
       "src": "android"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

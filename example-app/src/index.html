@@ -2,23 +2,38 @@
 <html lang="en" dir="ltr" class="hydrated">
   <head>
     <meta charset="UTF-8" />
-    <title>Example Capacitor App</title>
+    <title>Contacts Plugin Example</title>
     <meta
       name="viewport"
       content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <meta name="format-detection" content="telephone=no" />
+    <style>
+      body { font-family: -apple-system, system-ui, sans-serif; margin: 1rem; }
+      button { display: block; width: 100%; padding: 0.9rem; margin: 0.4rem 0; font-size: 1rem; }
+      input { width: 100%; padding: 0.5rem; margin: 0.2rem 0 0.6rem; box-sizing: border-box; }
+      pre { background: #111; color: #0f0; padding: 0.75rem; border-radius: 6px;
+            white-space: pre-wrap; word-break: break-word; min-height: 6rem; }
+    </style>
   </head>
   <body>
     <main>
-      <h1>Capacitor Test Plugin Project</h1>
-      <p>
-        This project can be used to test out the functionality of your plugin. Nothing in the
-        <em>example-app/</em> folder will be published to npm when using this template, so you can create away!
-      </p>
-      <label for="echoInput">Echo Text:</label>
-      <input type="text" id="echoInput" name="echoInput" value="Hello World!" />
-      <button onclick="testEcho()">Click Me!</button>
+      <h1>@capacitor/contacts — example</h1>
+
+      <label for="filterInput">find() filter:</label>
+      <input type="text" id="filterInput" placeholder="empty = all contacts" />
+      <button onclick="testFind()">find({ fields: ['*'], multiple: true })</button>
+      <button onclick="testFindPhones()">find({ hasPhoneNumber: true })</button>
+
+      <label for="givenNameInput">save() given name:</label>
+      <input type="text" id="givenNameInput" value="Ada" />
+      <button onclick="testSaveNew()">save() — create</button>
+      <button onclick="testSaveUpdate()">save() — update last saved</button>
+
+      <button onclick="testPick()">pickContact()</button>
+      <button onclick="testRemove()">remove() — last saved/picked id</button>
+
+      <pre id="out">Tap a method…</pre>
     </main>
 
     <script src="./js/example.js" type="module"></script>
