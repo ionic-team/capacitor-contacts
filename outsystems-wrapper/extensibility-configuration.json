@@ -7,7 +7,7 @@
         },
         "capacitor": {
             "source": {
-                "npm": "https://github.com/ionic-team/capacitor-os-contacts#main"
+                "npm": "https://github.com/ionic-team/capacitor-contacts#main"
             }
         }
     },
