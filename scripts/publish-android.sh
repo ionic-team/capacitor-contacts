@@ -31,8 +31,8 @@ publish_plugin_android () {
                 export PLUGIN_VERSION
                 export CAPACITOR_VERSION
                 export CAP_PLUGIN_PUBLISH=true
-                export PLUGIN_REPO="https://github.com/OutSystems/capacitor-contacts"
-                export PLUGIN_SCM="github.com:OutSystems/capacitor-contacts"
+                export PLUGIN_REPO="https://github.com/ionic-team/capacitor-contacts"
+                export PLUGIN_SCM="github.com:ionic-team/capacitor-contacts"
 
                 # Build and publish
                 "$ANDROID_PATH"/gradlew clean build publishReleasePublicationToSonatypeRepository closeAndReleaseSonatypeStagingRepository --no-daemon --max-workers 1 -b "$ANDROID_PATH"/build.gradle -Pandroid.useAndroidX=true > $LOG_OUTPUT 2>&1

@@ -21,10 +21,10 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OutSystems/capacitor-contacts.git"
+    "url": "git+https://github.com/ionic-team/capacitor-contacts.git"
   },
   "bugs": {
-    "url": "https://github.com/OutSystems/capacitor-contacts/issues"
+    "url": "https://github.com/ionic-team/capacitor-contacts/issues"
   },
   "keywords": [
     "capacitor",
