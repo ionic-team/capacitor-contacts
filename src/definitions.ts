@@ -284,10 +284,12 @@ export interface Contact {
   note?: string;
 
   /**
-   * The contact's photos. Reads always return `type: 'base64'` with the
-   * `value` holding the base64-encoded image on both platforms. On save, the
-   * first entry is applied: pass `type: 'base64'` with base64 data, or
-   * `type: 'url'` with a local `file://`/`content://` URI to import.
+   * The contact's photos. Reads return `type: 'url'` with the `value`
+   * holding a reference to the image, never image bytes: on Android the
+   * contact's `content://` photo URI, on iOS the path of a copy written to
+   * the app's temporary directory (cleared by the system). On save, the first entry is
+   * applied: pass `type: 'base64'` with base64 data, or `type: 'url'` with a
+   * local `file://`/`content://` URI to import.
    *
    * @since 1.0.0
    */

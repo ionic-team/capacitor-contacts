@@ -7,8 +7,7 @@ import Foundation
 ///
 /// Permission model is **implicit**: there are no `checkPermissions` /
 /// `requestPermissions` methods. `find`, `save` and `remove` request Contacts
-/// access before touching the store, matching the legacy
-/// cordova-plugin-contacts behavior. On iOS 18+ Limited Access counts as
+/// access before touching the store. On iOS 18+ Limited Access counts as
 /// granted. `pickContact` presents the system picker, which requires no
 /// permission at all.
 @objc(ContactsPlugin)

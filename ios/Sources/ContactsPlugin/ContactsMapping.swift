@@ -1,8 +1,8 @@
 import Contacts
 import Foundation
 
-/// Wire-format mapping between `CNContact` and the plugin's W3C-shaped
-/// dictionaries, shared by every method result and `save` input.
+/// Converts between `CNContact` and the W3C-style contact dictionaries the
+/// plugin returns and accepts; shared by every method result and `save` input.
 extension Contacts {
 
     // MARK: - Mapping CNContact -> dictionary
@@ -11,7 +11,7 @@ extension Contacts {
         return desired.isEmpty || desired.contains(field)
     }
 
-    /// Maps a `CNContact` to the wire format. Every property is guarded with
+    /// Maps a `CNContact` to a contact dictionary. Every property is guarded with
     /// `isKeyAvailable` so partially-fetched contacts (e.g. returned by the
     /// permissionless system picker) never raise
     /// `CNContactPropertyNotFetchedException`.
@@ -117,8 +117,8 @@ extension Contacts {
         if wants("photos", desired) {
             let thumbnail = contact.isKeyAvailable(CNContactThumbnailImageDataKey) ? contact.thumbnailImageData : nil
             let full = contact.isKeyAvailable(CNContactImageDataKey) ? contact.imageData : nil
-            if let imageData = thumbnail ?? full {
-                dict["photos"] = [field(id: nil, value: imageData.base64EncodedString(), type: "base64")]
+            if let imageData = full ?? thumbnail, let path = photoTempFile(imageData, identifier: contact.identifier) {
+                dict["photos"] = [field(id: nil, value: path, type: "url")]
             }
         }
 
@@ -149,9 +149,9 @@ extension Contacts {
         return result
     }
 
-    /// Canonical, locale-free label for a CNLabeledValue label, so a
-    /// read-modify-write roundtrips and both platforms emit identical type
-    /// strings; custom labels pass through.
+    /// Maps system labels to fixed English strings ("home", "work", ...) so
+    /// both platforms return the same values regardless of device language.
+    /// Custom labels pass through unchanged.
     private func canonicalLabel(_ label: String?) -> String {
         switch label {
         case nil, "": return "other"
@@ -260,17 +260,37 @@ extension Contacts {
         }
     }
 
+    /// Writes the photo to a file in the app's temporary directory and
+    /// returns its path; photo reads carry this path in the `url` field.
+    /// The system clears the temporary directory, so the path is short-lived.
+    private func photoTempFile(_ data: Data, identifier: String) -> String? {
+        let name = "contact_photo_" + identifier.replacingOccurrences(of: ":", with: "-")
+        let path = (NSTemporaryDirectory() as NSString).appendingPathComponent(name)
+        do {
+            try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+            return path
+        } catch {
+            return nil
+        }
+    }
+
     /// Decodes the first photo entry into image bytes: `base64` values are
-    /// decoded directly; `url` values are read from local `file://` URLs
-    /// (matching the legacy plugin's photo import behavior).
+    /// decoded directly; `url` values are read from local `file://` URLs or
+    /// bare file paths.
     private func photoData(from photo: [String: Any]) -> Data? {
         guard let value = photo["value"] as? String, !value.isEmpty else { return nil }
         let type = (photo["type"] as? String)?.lowercased() ?? "url"
         if type == "base64" {
             return Data(base64Encoded: value, options: .ignoreUnknownCharacters)
         }
-        guard let url = URL(string: value), url.isFileURL else { return nil }
-        return try? Data(contentsOf: url)
+        if let url = URL(string: value), url.isFileURL {
+            return try? Data(contentsOf: url)
+        }
+        // Photo reads return bare paths, so accept those as well.
+        if value.hasPrefix("/") {
+            return try? Data(contentsOf: URL(fileURLWithPath: value))
+        }
+        return nil
     }
 
     /// Maps a free-form label string to a Contacts framework label constant.

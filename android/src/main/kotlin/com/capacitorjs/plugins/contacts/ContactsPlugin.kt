@@ -23,8 +23,7 @@ import java.util.concurrent.Executors
  * Permission model is **implicit**: there are no `checkPermissions` /
  * `requestPermissions` methods. Each method ensures the permission it needs
  * before touching the provider — read for `find`/`pickContact`, read+write
- * for `save`/`remove` — matching the legacy cordova-plugin-contacts
- * per-action split. All provider work runs off the main thread.
+ * for `save`/`remove`. All provider work runs off the main thread.
  */
 @CapacitorPlugin(
     name = "Contacts",

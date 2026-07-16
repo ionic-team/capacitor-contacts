@@ -359,13 +359,12 @@ class Contacts(private val context: Context) {
                     }
 
                     Photo.CONTENT_ITEM_TYPE -> {
-                        // Photo decoding and the group-title lookup below are
-                        // per-row provider round-trips; skip them entirely
-                        // when the caller didn't ask for the field.
-                        if (wants("photos", desiredFields)) {
-                            readPhotoBase64(dataId)?.let { b64 ->
-                                photos.put(field(dataId, b64, "base64", pref))
-                            }
+                        if (wants("photos", desiredFields) && photoRowHasData(dataId)) {
+                            val photoUri = Uri.withAppendedPath(
+                                ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId.toLong()),
+                                ContactsContract.Contacts.Photo.CONTENT_DIRECTORY
+                            )
+                            photos.put(field(dataId, photoUri.toString(), "url", pref))
                         }
                     }
 
@@ -411,9 +410,9 @@ class Contacts(private val context: Context) {
         return f
     }
 
-    // Read-side TYPE_* -> canonical label mapping, locale-free so a
-    // read-modify-write roundtrips and both platforms emit identical type
-    // strings (the platform's getTypeLabel returns localized text).
+    // Maps TYPE_* constants to fixed English labels ("home", "work", ...).
+    // The platform's getTypeLabel returns text in the device language, so a
+    // contact saved and re-read under different languages would not match.
 
     private fun phoneLabel(type: Int, custom: String?): String = when (type) {
         Phone.TYPE_HOME -> "home"
@@ -423,6 +422,18 @@ class Contacts(private val context: Context) {
         Phone.TYPE_FAX_HOME -> "home fax"
         Phone.TYPE_PAGER -> "pager"
         Phone.TYPE_MAIN -> "main"
+        Phone.TYPE_CALLBACK -> "callback"
+        Phone.TYPE_CAR -> "car"
+        Phone.TYPE_COMPANY_MAIN -> "company main"
+        Phone.TYPE_OTHER_FAX -> "other fax"
+        Phone.TYPE_RADIO -> "radio"
+        Phone.TYPE_TELEX -> "telex"
+        Phone.TYPE_TTY_TDD -> "tty tdd"
+        Phone.TYPE_WORK_MOBILE -> "work mobile"
+        Phone.TYPE_WORK_PAGER -> "work pager"
+        Phone.TYPE_ASSISTANT -> "assistant"
+        Phone.TYPE_MMS -> "mms"
+        Phone.TYPE_ISDN -> "isdn"
         Phone.TYPE_CUSTOM -> custom?.lowercase(Locale.getDefault()) ?: "other"
         else -> "other"
     }
@@ -498,16 +509,15 @@ class Contacts(private val context: Context) {
         return null
     }
 
-    private fun readPhotoBase64(dataId: String?): String? {
-        if (dataId == null) return null
+    /** A contact can have a photo row with no image in it; those must not
+     *  produce a photo entry. */
+    private fun photoRowHasData(dataId: String?): Boolean {
+        if (dataId == null) return false
         return try {
             val uri = ContentUris.withAppendedId(Data.CONTENT_URI, dataId.toLong())
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                val bytes = input.readBytes()
-                if (bytes.isEmpty()) null else Base64.encodeToString(bytes, Base64.NO_WRAP)
-            }
+            context.contentResolver.openInputStream(uri)?.use { it.read() != -1 } ?: false
         } catch (e: Exception) {
-            null
+            false
         }
     }
 
@@ -771,7 +781,7 @@ class Contacts(private val context: Context) {
     /**
      * Decodes the first photo entry into image bytes: `base64` values are
      * decoded directly; `url` values are read from local `file://` /
-     * `content://` URIs (matching the legacy plugin's photo import behavior).
+     * `content://` URIs.
      */
     private fun photoBytes(photo: JSONObject?): ByteArray? {
         val value = photo?.stringOrNull("value")
@@ -833,6 +843,18 @@ class Contacts(private val context: Context) {
         "fax" -> TypedLabel(Phone.TYPE_FAX_WORK)
         "pager" -> TypedLabel(Phone.TYPE_PAGER)
         "main" -> TypedLabel(Phone.TYPE_MAIN)
+        "callback" -> TypedLabel(Phone.TYPE_CALLBACK)
+        "car" -> TypedLabel(Phone.TYPE_CAR)
+        "company main" -> TypedLabel(Phone.TYPE_COMPANY_MAIN)
+        "other fax" -> TypedLabel(Phone.TYPE_OTHER_FAX)
+        "radio" -> TypedLabel(Phone.TYPE_RADIO)
+        "telex" -> TypedLabel(Phone.TYPE_TELEX)
+        "tty tdd" -> TypedLabel(Phone.TYPE_TTY_TDD)
+        "work mobile" -> TypedLabel(Phone.TYPE_WORK_MOBILE)
+        "work pager" -> TypedLabel(Phone.TYPE_WORK_PAGER)
+        "assistant" -> TypedLabel(Phone.TYPE_ASSISTANT)
+        "mms" -> TypedLabel(Phone.TYPE_MMS)
+        "isdn" -> TypedLabel(Phone.TYPE_ISDN)
         "other" -> TypedLabel(Phone.TYPE_OTHER)
         else -> TypedLabel(Phone.TYPE_CUSTOM, type)
     }
