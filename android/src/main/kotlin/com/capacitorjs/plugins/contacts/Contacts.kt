@@ -754,7 +754,7 @@ class Contacts(private val context: Context) {
             )
         }
 
-        if (contact.has("birthday") && !contact.isNull("birthday")) {
+        if (contact.opt("birthday") is Number) {
             val ms = contact.optLong("birthday")
             val formatted = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(ms))
             ops.add(
