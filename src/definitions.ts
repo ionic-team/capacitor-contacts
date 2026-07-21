@@ -19,7 +19,7 @@ export interface ContactsPlugin {
    * Requests the READ/WRITE_CONTACTS (Android) / Contacts (iOS) permission
    * internally.
    *
-   * **iOS 18+:** works under Limited Access — new contacts are added to the
+   * **iOS 18+:** works under Limited Access: new contacts are added to the
    * app's accessible set; updating requires the target contact to be in that
    * set (otherwise the call rejects with `OS-PLUG-CONT-0001`).
    *
@@ -44,7 +44,7 @@ export interface ContactsPlugin {
    * user selects. Rejects with `OS-PLUG-CONT-0006` if the user cancels.
    *
    * On iOS the system picker requires no permission and always shows the full
-   * contact list — even under iOS 18+ Limited Access (the picked contact is
+   * contact list, even under iOS 18+ Limited Access (the picked contact is
    * returned without joining the app's accessible set). On Android the
    * READ_CONTACTS permission is requested internally to read the picked
    * contact's details.
@@ -274,7 +274,7 @@ export interface Contact {
   /**
    * A free-form note about the contact.
    *
-   * **iOS:** not supported by default — reading/writing a contact's note
+   * **iOS:** not supported by default: reading/writing a contact's note
    * requires Apple's restricted `com.apple.developer.contacts.notes`
    * entitlement. Without it the field is omitted on read and ignored on save.
    * Android has no such restriction.
@@ -475,7 +475,7 @@ export interface ContactAddress {
  */
 export interface ContactOrganization {
   /**
-   * Platform-assigned id of this organization entry. Android only — iOS
+   * Platform-assigned id of this organization entry. Android only; iOS
    * models the organization as flat contact properties without an id.
    *
    * @since 1.0.0

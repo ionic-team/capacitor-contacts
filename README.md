@@ -25,7 +25,7 @@ npx cap sync
 ## iOS
 
 Add the `NSContactsUsageDescription` key to your app's `Info.plist` and
-describe why the app accesses the user's contacts — iOS crashes on first
+describe why the app accesses the user's contacts; iOS crashes on first
 contacts access without it:
 
 ```xml
@@ -35,8 +35,8 @@ contacts access without it:
 
 Notes:
 
-- The plugin uses the modern **Contacts framework** (`CNContactStore`) —
-  never the deprecated AddressBook APIs — so it fully supports iOS 18+
+- The plugin uses the modern **Contacts framework** (`CNContactStore`,
+  never the deprecated AddressBook APIs), so it fully supports iOS 18+
   **Limited Access**: `find`, `save` and `remove` operate on the subset the
   user shared with the app, and `pickContact` presents the system picker
   (which needs no permission and always shows the full contact list).
@@ -50,7 +50,7 @@ Notes:
 
 The plugin declares `READ_CONTACTS` and `WRITE_CONTACTS` in its own
 manifest; Gradle manifest merging adds them to your app automatically. Each
-method requests the runtime permission it needs the first time it runs —
+method requests the runtime permission it needs the first time it runs;
 read for `find`/`pickContact`, read + write for `save`/`remove`.
 
 ## Permission model
@@ -160,7 +160,7 @@ Resolves with the full saved contact.
 Requests the READ/WRITE_CONTACTS (Android) / Contacts (iOS) permission
 internally.
 
-**iOS 18+:** works under Limited Access — new contacts are added to the
+**iOS 18+:** works under Limited Access: new contacts are added to the
 app's accessible set; updating requires the target contact to be in that
 set (otherwise the call rejects with `OS-PLUG-CONT-0001`).
 
@@ -207,7 +207,7 @@ Launches the native contact picker UI and resolves with the contact the
 user selects. Rejects with `OS-PLUG-CONT-0006` if the user cancels.
 
 On iOS the system picker requires no permission and always shows the full
-contact list — even under iOS 18+ Limited Access (the picked contact is
+contact list, even under iOS 18+ Limited Access (the picked contact is
 returned without joining the app's accessible set). On Android the
 READ_CONTACTS permission is requested internally to read the picked
 contact's details.
@@ -248,7 +248,7 @@ A single device contact.
 | **`ims`**           | <code>ContactField[]</code>                         | The contact's instant-messaging handles.                                                                                                                                                                                                                                                                                                                                                                             | 1.0.0 |
 | **`organizations`** | <code>ContactOrganization[]</code>                  | The contact's organizations.                                                                                                                                                                                                                                                                                                                                                                                         | 1.0.0 |
 | **`birthday`**      | <code>number</code>                                 | The contact's birthday as epoch milliseconds.                                                                                                                                                                                                                                                                                                                                                                        | 1.0.0 |
-| **`note`**          | <code>string</code>                                 | A free-form note about the contact. **iOS:** not supported by default — reading/writing a contact's note requires Apple's restricted `com.apple.developer.contacts.notes` entitlement. Without it the field is omitted on read and ignored on save. Android has no such restriction.                                                                                                                                 | 1.0.0 |
+| **`note`**          | <code>string</code>                                 | A free-form note about the contact. **iOS:** not supported by default: reading/writing a contact's note requires Apple's restricted `com.apple.developer.contacts.notes` entitlement. Without it the field is omitted on read and ignored on save. Android has no such restriction.                                                                                                                                  | 1.0.0 |
 | **`photos`**        | <code>ContactField[]</code>                         | The contact's photos. Reads return `type: 'url'` with the `value` holding a reference to the image, never image bytes: on Android the contact's `content://` photo URI, on iOS the path of a copy written to the app's temporary directory (cleared by the system). On save, the first entry is applied: pass `type: 'base64'` with base64 data, or `type: 'url'` with a local `file://`/`content://` URI to import. | 1.0.0 |
 | **`categories`**    | <code>ContactField[]</code>                         | User-defined categories associated with the contact. Read-only: populated from the contact's group memberships on Android, never returned on iOS (the Contacts framework has no equivalent), and ignored on save.                                                                                                                                                                                                    | 1.0.0 |
 | **`urls`**          | <code>ContactField[]</code>                         | Web pages associated with the contact.                                                                                                                                                                                                                                                                                                                                                                               | 1.0.0 |
@@ -302,14 +302,14 @@ A postal address of a {@link <a href="#contact">Contact</a>}.
 
 An organization a {@link <a href="#contact">Contact</a>} belongs to.
 
-| Prop             | Type                 | Description                                                                                                                           | Since |
-| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----- |
-| **`id`**         | <code>string</code>  | Platform-assigned id of this organization entry. Android only — iOS models the organization as flat contact properties without an id. | 1.0.0 |
-| **`pref`**       | <code>boolean</code> | `true` if this is the contact's preferred organization.                                                                               | 1.0.0 |
-| **`type`**       | <code>string</code>  | The kind of organization, e.g. `work`.                                                                                                | 1.0.0 |
-| **`name`**       | <code>string</code>  | The organization name.                                                                                                                | 1.0.0 |
-| **`department`** | <code>string</code>  | The department within the organization.                                                                                               | 1.0.0 |
-| **`title`**      | <code>string</code>  | The contact's title at the organization.                                                                                              | 1.0.0 |
+| Prop             | Type                 | Description                                                                                                                          | Since |
+| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| **`id`**         | <code>string</code>  | Platform-assigned id of this organization entry. Android only; iOS models the organization as flat contact properties without an id. | 1.0.0 |
+| **`pref`**       | <code>boolean</code> | `true` if this is the contact's preferred organization.                                                                              | 1.0.0 |
+| **`type`**       | <code>string</code>  | The kind of organization, e.g. `work`.                                                                                               | 1.0.0 |
+| **`name`**       | <code>string</code>  | The organization name.                                                                                                               | 1.0.0 |
+| **`department`** | <code>string</code>  | The department within the organization.                                                                                              | 1.0.0 |
+| **`title`**      | <code>string</code>  | The contact's title at the organization.                                                                                             | 1.0.0 |
 
 
 #### ContactFindOptions

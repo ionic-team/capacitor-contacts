@@ -59,7 +59,7 @@ import Foundation
             // requires the restricted `com.apple.developer.contacts.notes`
             // entitlement (granted by Apple on request); requesting it without
             // the entitlement makes every fetch throw. `note` is therefore
-            // not supported on iOS by default — see README.
+            // not supported on iOS by default; see README.
         ]
         if includePhotos {
             stringKeys.append(CNContactThumbnailImageDataKey)

@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
  *
  * Permission model is **implicit**: there are no `checkPermissions` /
  * `requestPermissions` methods. Each method ensures the permission it needs
- * before touching the provider — read for `find`/`pickContact`, read+write
+ * before touching the provider: read for `find`/`pickContact`, read+write
  * for `save`/`remove`. All provider work runs off the main thread.
  */
 @CapacitorPlugin(

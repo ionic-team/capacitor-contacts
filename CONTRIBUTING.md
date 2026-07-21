@@ -43,7 +43,7 @@ This repository is integrated with ESLint, Prettier, and SwiftLint; run the form
 
 ## Publishing
 
-Releases are automated — do not run `npm publish` manually.
+Releases are automated; do not run `npm publish` manually.
 
 - Pushing to `development` or `next` triggers the **Release Plugin** workflow,
   which runs semantic-release (version, changelog, GitHub release, npm publish

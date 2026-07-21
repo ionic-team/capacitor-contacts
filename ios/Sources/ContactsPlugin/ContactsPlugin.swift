@@ -91,7 +91,7 @@ public class ContactsPlugin: CAPPlugin, CAPBridgedPlugin {
     // MARK: - pickContact
 
     /// Presents `CNContactPickerViewController`, which runs out of process and
-    /// needs no Contacts permission — the recommended flow under iOS 18+
+    /// needs no Contacts permission, the recommended flow under iOS 18+
     /// Limited Access (the full contact list is shown and only the picked
     /// contact's data is returned to the app).
     @objc func pickContact(_ call: CAPPluginCall) {
@@ -150,7 +150,7 @@ extension ContactsPlugin: CNContactPickerDelegate {
         guard let call = call else { return }
         // When the store is readable, re-fetch by identifier for the full key
         // set. Without access (picker needs none), map the picker's contact
-        // directly — the mapper guards every key with `isKeyAvailable`.
+        // directly; the mapper guards every key with `isKeyAvailable`.
         if implementation.isAuthorized(), let full = implementation.getContact(byId: contact.identifier) {
             call.resolve(full)
         } else {

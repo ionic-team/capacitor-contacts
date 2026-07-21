@@ -46,7 +46,7 @@ window.testSaveNew = async () => {
 
 window.testSaveUpdate = async () => {
   if (!lastId) {
-    show('❌ save (update)', 'No saved contact yet — run save() — create first.');
+    show('❌ save (update)', 'No saved contact yet; run save() first.');
     return;
   }
   await run('save (update)', () =>
@@ -68,7 +68,7 @@ window.testPick = async () => {
 
 window.testRemove = async () => {
   if (!lastId) {
-    show('❌ remove', 'No contact id captured yet — save or pick a contact first.');
+    show('❌ remove', 'No contact id captured yet; save or pick a contact first.');
     return;
   }
   await run('remove', () => Contacts.remove({ id: lastId }));

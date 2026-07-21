@@ -596,7 +596,7 @@ class Contacts(private val context: Context) {
         )
         for ((key, mime) in mimeTypeByWireKey) {
             if (!contact.has(key) || contact.isNull(key)) continue
-            // Only the birthday is managed among events — never delete the
+            // Only the birthday is managed among events; never delete the
             // contact's anniversaries or other custom dates.
             var selection = "${Data.RAW_CONTACT_ID} = ? AND ${Data.MIMETYPE} = ?"
             if (key == "birthday") {
