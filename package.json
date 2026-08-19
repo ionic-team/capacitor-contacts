@@ -1,6 +1,6 @@
 {
   "name": "@capacitor/contacts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Access, search, pick, create, update and remove device contacts.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
