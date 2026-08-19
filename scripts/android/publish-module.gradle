@@ -49,7 +49,7 @@ afterEvaluate {
                     url = PLUGIN_REPO
                     licenses {
                         license {
-                            name = 'Apache-2.0'
+                            name = 'MIT'
                             url = PLUGIN_REPO + '/blob/main' + '/LICENSE'
                         }
                     }
