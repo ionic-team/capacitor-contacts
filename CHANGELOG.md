@@ -1,3 +1,10 @@
+## [1.0.2-next.1](https://github.com/ionic-team/capacitor-contacts/compare/v1.0.1...v1.0.2-next.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* remove "prepare" for NPM 12 ([#6](https://github.com/ionic-team/capacitor-contacts/issues/6)) ([6d488e8](https://github.com/ionic-team/capacitor-contacts/commit/6d488e838d8327524b17d5fc163a4de7839cb878))
+
 ## [1.0.1](https://github.com/ionic-team/capacitor-contacts/compare/v1.0.0...v1.0.1) (2026-08-19)
 
 
