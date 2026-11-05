@@ -1,3 +1,15 @@
+# [2.0.0-next.1](https://github.com/ionic-team/capacitor-contacts/compare/v1.0.2-next.1...v2.0.0-next.1) (2026-11-05)
+
+
+### Features
+
+* Align plugin baselines with core ([#7](https://github.com/ionic-team/capacitor-contacts/issues/7)) ([1144e91](https://github.com/ionic-team/capacitor-contacts/commit/1144e91796e701c2e4b1ea48737959967e487835))
+
+
+### BREAKING CHANGES
+
+* Align plugin baselines with Capacitor 9
+
 ## [1.0.2-next.1](https://github.com/ionic-team/capacitor-contacts/compare/v1.0.1...v1.0.2-next.1) (2026-10-23)
 
 
