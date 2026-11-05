@@ -15,7 +15,8 @@
     "android/src/main/",
     "dist/",
     "ios/Sources",
-    "ios/Tests"
+    "ios/Tests",
+    "android/proguard-rules.pro"
   ],
   "author": "OutSystems <support@outsystems.com>",
   "license": "MIT",
@@ -49,10 +50,10 @@
     "publish:cocoapod": "pod trunk push ./CapacitorContacts.podspec --allow-warnings"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/core": "^8.0.0",
+    "@capacitor/android": "next",
+    "@capacitor/core": "next",
     "@capacitor/docgen": "^0.3.1",
-    "@capacitor/ios": "^8.0.0",
+    "@capacitor/ios": "next",
     "@ionic/eslint-config": "^0.5.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
@@ -70,7 +71,7 @@
     "semantic-release": "^25.0.2"
   },
   "peerDependencies": {
-    "@capacitor/core": ">=8.0.0"
+    "@capacitor/core": ">=9.0.0-beta.0"
   },
   "prettier": "@ionic/prettier-config",
   "swiftlint": "@ionic/swiftlint-config",
