@@ -52,13 +52,41 @@ The plugin declares `READ_CONTACTS` and `WRITE_CONTACTS` in its own
 manifest; Gradle manifest merging adds them to your app automatically. Each
 method requests the runtime permission it needs the first time it runs;
 read for `find`/`pickContact`, read + write for `save`/`remove`.
+The `pickContactField` method needs no permission: it opens the contacts app on a single
+data kind (phone, email or address), and the app grants temporary read access
+to just the row the user selects.
+
+:::warning[Google Play Requirements]
+
+The `pickContactField` method exists mainly to adhere to Google Play's restrictions for the Contacts Permission. This only applies to apps using Capacitor 9 or higher. You should evaluate whether `pickContactField` is enough for your app's use cases. If not, you may need to submit a Play Console declaration. For more information refer to [Google Play's page](https://support.google.com/googleplay/android-developer/answer/16909972?sjid=14458661934730177096-EU#contacts-permissions).
+
+:::
+
+If your app only uses `pickContactField`, you can keep the contacts
+permissions out of your app by removing them from the merged manifest in your
+app's `AndroidManifest.xml`:
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_CONTACTS" tools:node="remove" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" tools:node="remove" />
+</manifest>
+```
+
+The other methods then reject with `OS-PLUG-CONT-0021`, because the
+permissions they need are not declared.
 
 ## Permission model
 
 This plugin intentionally exposes **no** `checkPermissions()` /
 `requestPermissions()` methods: permissions are requested implicitly by each
 method, matching the legacy `cordova-plugin-contacts` behavior. A call
-rejects with `OS-PLUG-CONT-0020` when the user denies access.
+rejects with `OS-PLUG-CONT-0020` when the user denies access. `pickContactField`
+needs no permission. On Android, the other methods reject with
+`OS-PLUG-CONT-0021` when the permissions they need are not declared in the
+app's manifest.
 
 ## Errors
 
@@ -74,6 +102,7 @@ Every rejection carries a structured code + message:
 | `OS-PLUG-CONT-0005` | Not supported                       |
 | `OS-PLUG-CONT-0006` | Operation cancelled (picker closed) |
 | `OS-PLUG-CONT-0020` | Permission denied                   |
+| `OS-PLUG-CONT-0021` | Required permission not declared in the Android manifest |
 
 ## Usage
 
@@ -100,8 +129,11 @@ const saved = await Contacts.save({
 // Update it (id present -> update)
 await Contacts.save({ contact: { ...saved, nickname: 'Countess' } });
 
-// Pick a contact with the native picker
+// Pick a contact with the native picker; needs contacts permission on Android
 const picked = await Contacts.pickContact();
+
+// Pick a single phone number, email or address; needs no contacts permission on both platforms
+const { value, type, displayName } = await Contacts.pickContactField({ field: 'phone' });
 
 // Remove it by id
 await Contacts.remove({ id: saved.id! });
