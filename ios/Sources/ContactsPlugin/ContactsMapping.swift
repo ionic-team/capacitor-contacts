@@ -132,12 +132,23 @@ extension Contacts {
         address["pref"] = false
         address["type"] = canonicalLabel(labeled.label)
         address["formatted"] = CNPostalAddressFormatter.string(from: postal, style: .mailingAddress)
-        address["streetAddress"] = postal.street
-        address["locality"] = postal.city
-        address["region"] = postal.state
-        address["postalCode"] = postal.postalCode
-        address["country"] = postal.country
+        address.merge(postalParts(postal)) { _, new in new }
         return address
+    }
+
+    /// The postal parts of a `CNPostalAddress`, shared by the full-contact and
+    /// picked-field results.
+    ///
+    /// - Parameter postal: the address to read.
+    /// - Returns: `streetAddress`, `locality`, `region`, `postalCode` and `country`.
+    private func postalParts(_ postal: CNPostalAddress) -> [String: Any] {
+        return [
+            "streetAddress": postal.street,
+            "locality": postal.city,
+            "region": postal.state,
+            "postalCode": postal.postalCode,
+            "country": postal.country
+        ]
     }
 
     private func field(id: String?, value: String, type: String) -> [String: Any] {
@@ -173,6 +184,57 @@ extension Contacts {
             }
             return label.lowercased()
         }
+    }
+
+    // MARK: - Mapping a picked contact property -> dictionary
+
+    /// The `CNContact` key behind each `pickContactField` kind.
+    ///
+    /// - Parameter field: `phone`, `email` or `address`.
+    /// - Returns: the matching `CNContact` key, or `nil` for an unknown kind.
+    func pickerPropertyKey(forField field: String) -> String? {
+        switch field {
+        case "phone": return CNContactPhoneNumbersKey
+        case "email": return CNContactEmailAddressesKey
+        case "address": return CNContactPostalAddressesKey
+        default: return nil
+        }
+    }
+
+    /// Maps the property the user tapped in the system picker to the
+    /// `pickContactField` result: the picked `value` and its `type` label, plus
+    /// the contact's `displayName` when available. Same shape Android returns.
+    ///
+    /// - Parameters:
+    ///   - contact: the contact the property belongs to.
+    ///   - key: the `CNContact` key of the tapped property.
+    ///   - label: the property's label, e.g. `CNLabelHome`.
+    ///   - value: the property's value (`CNPhoneNumber`, `String` or `CNPostalAddress`).
+    /// - Returns: the result dictionary, or `nil` when `value` isn't the type
+    ///   expected for `key`.
+    func pickedPropertyToDictionary(contact: CNContact, key: String, label: String?, value: Any) -> [String: Any]? {
+        var dict: [String: Any] = [:]
+        switch (key, value) {
+        case (CNContactPhoneNumbersKey, let phone as CNPhoneNumber):
+            dict["field"] = "phone"
+            dict["value"] = phone.stringValue
+        case (CNContactEmailAddressesKey, let email as String):
+            dict["field"] = "email"
+            dict["value"] = email
+        case (CNContactPostalAddressesKey, let postal as CNPostalAddress):
+            dict["field"] = "address"
+            dict["value"] = CNPostalAddressFormatter.string(from: postal, style: .mailingAddress)
+            dict["address"] = postalParts(postal)
+        default:
+            return nil
+        }
+        dict["type"] = canonicalLabel(label)
+        let fullName = [CNContactFormatter.descriptorForRequiredKeys(for: .fullName)]
+        if contact.areKeysAvailable(fullName),
+           let name = CNContactFormatter.string(from: contact, style: .fullName), !name.isEmpty {
+            dict["displayName"] = name
+        }
+        return dict
     }
 
     // MARK: - Mapping dictionary -> CNMutableContact

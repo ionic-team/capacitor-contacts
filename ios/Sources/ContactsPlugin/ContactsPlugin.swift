@@ -8,8 +8,8 @@ import Foundation
 /// Permission model is **implicit**: there are no `checkPermissions` /
 /// `requestPermissions` methods. `find`, `save` and `remove` request Contacts
 /// access before touching the store. On iOS 18+ Limited Access counts as
-/// granted. `pickContact` presents the system picker, which requires no
-/// permission at all.
+/// granted. `pickContact` and `pickContactField` present the system picker,
+/// which requires no permission at all.
 @objc(ContactsPlugin)
 public class ContactsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "ContactsPlugin"
@@ -18,13 +18,18 @@ public class ContactsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "find", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "save", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "remove", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "pickContact", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "pickContact", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "pickContactField", returnType: CAPPluginReturnPromise)
     ]
 
     private let implementation = Contacts()
 
     /// Call awaiting the result of the contact picker UI.
     private var pickCall: CAPPluginCall?
+
+    /// Delegate of the in-flight `pickContactField` picker. Held here because
+    /// `CNContactPickerViewController.delegate` is a weak reference.
+    private var fieldPickerDelegate: FieldPickerDelegate?
 
     // MARK: - find
 
@@ -107,14 +112,84 @@ public class ContactsPlugin: CAPPlugin, CAPBridgedPlugin {
             self.pickCall = call
             let picker = CNContactPickerViewController()
             picker.delegate = self
-            // Present from the top-most controller so an already-presented
-            // modal doesn't make present() fail silently (stuck pick state).
-            var presenter = viewController
-            while let presented = presenter.presentedViewController {
-                presenter = presented
-            }
-            presenter.present(picker, animated: true)
+            self.present(picker, from: viewController)
         }
+    }
+
+    // MARK: - pickContactField
+
+    /// Presents the system picker restricted to one kind of property (phone,
+    /// email or address), so the user taps a single value and only that value
+    /// plus the contact's name is returned. Needs no Contacts permission.
+    ///
+    /// - Parameter call: carries the `field` option. Rejects with
+    ///   `OS-PLUG-CONT-0001` when it is missing or unknown.
+    @objc func pickContactField(_ call: CAPPluginCall) {
+        guard let field = call.getString("field"),
+              let key = implementation.pickerPropertyKey(forField: field) else {
+            reject(call, .invalidArgument)
+            return
+        }
+        DispatchQueue.main.async {
+            guard self.pickCall == nil else {
+                self.reject(call, .pendingOperation)
+                return
+            }
+            guard let viewController = self.bridge?.viewController else {
+                self.reject(call, .unknown)
+                return
+            }
+            self.pickCall = call
+            let delegate = FieldPickerDelegate(
+                onSelect: { [weak self] property in
+                    guard let self = self, let call = self.finishPick() else { return }
+                    if let contact = self.implementation.pickedPropertyToDictionary(
+                        contact: property.contact,
+                        key: property.key,
+                        label: property.label,
+                        value: property.value as Any
+                    ) {
+                        call.resolve(contact)
+                    } else {
+                        self.reject(call, .unknown)
+                    }
+                },
+                onCancel: { [weak self] in
+                    guard let self = self, let call = self.finishPick() else { return }
+                    self.reject(call, .operationCancelled)
+                }
+            )
+            self.fieldPickerDelegate = delegate
+            let picker = CNContactPickerViewController()
+            picker.displayedPropertyKeys = [key]
+            picker.predicateForSelectionOfProperty = NSPredicate(format: "key == %@", key)
+            picker.delegate = delegate
+            self.present(picker, from: viewController)
+        }
+    }
+
+    /// Clears the in-flight pick state.
+    ///
+    /// - Returns: the call the pick was holding.
+    private func finishPick() -> CAPPluginCall? {
+        let call = pickCall
+        pickCall = nil
+        fieldPickerDelegate = nil
+        return call
+    }
+
+    /// Presents from the top-most controller so an already-presented modal
+    /// doesn't make present() fail silently (stuck pick state).
+    ///
+    /// - Parameters:
+    ///   - picker: the picker to show.
+    ///   - viewController: the controller to start looking for a presenter from.
+    private func present(_ picker: CNContactPickerViewController, from viewController: UIViewController) {
+        var presenter = viewController
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+        presenter.present(picker, animated: true)
     }
 
     // MARK: - Implicit permission handling
@@ -162,5 +237,29 @@ extension ContactsPlugin: CNContactPickerDelegate {
         let call = pickCall
         pickCall = nil
         call?.reject(ContactsError.operationCancelled.message, ContactsError.operationCancelled.code)
+    }
+}
+
+/// Delegate for `pickContactField`. Implements only the property-selection
+/// callback: also implementing `didSelect contact:` would make the picker
+/// select whole contacts and never report a property.
+private final class FieldPickerDelegate: NSObject, CNContactPickerDelegate {
+    private let onSelect: (CNContactProperty) -> Void
+    private let onCancel: () -> Void
+
+    /// - Parameters:
+    ///   - onSelect: called with the property the user tapped.
+    ///   - onCancel: called when the user dismisses the picker.
+    init(onSelect: @escaping (CNContactProperty) -> Void, onCancel: @escaping () -> Void) {
+        self.onSelect = onSelect
+        self.onCancel = onCancel
+    }
+
+    func contactPicker(_ picker: CNContactPickerViewController, didSelect contactProperty: CNContactProperty) {
+        onSelect(contactProperty)
+    }
+
+    func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
+        onCancel()
     }
 }
