@@ -13,7 +13,8 @@ enum class ContactsError(val code: String, val message: String) {
     IO_ERROR("OS-PLUG-CONT-0004", "An I/O error occurred while accessing contacts."),
     NOT_SUPPORTED("OS-PLUG-CONT-0005", "The operation is not supported on this device."),
     OPERATION_CANCELLED("OS-PLUG-CONT-0006", "The operation was cancelled."),
-    PERMISSION_DENIED("OS-PLUG-CONT-0020", "Contacts permission was denied.")
+    PERMISSION_DENIED("OS-PLUG-CONT-0020", "Contacts permission was denied."),
+    PERMISSION_NOT_DECLARED("OS-PLUG-CONT-0021", "A required contacts permission is not declared in the app manifest.")
 }
 
 /**

@@ -288,8 +288,15 @@ class ContactsPlugin : Plugin() {
         else -> READ
     }
 
-    /** Ensures the method's permission alias, then dispatches the saved call. */
+    /**
+     * Rejects with `PERMISSION_NOT_DECLARED` if the manifest lacks the method's permissions,
+     * otherwise ensures its permission alias and dispatches the saved call.
+     */
     private fun ensurePermission(call: PluginCall) {
+        if (!isPermissionDeclared(aliasFor(call))) {
+            reject(call, ContactsError.PERMISSION_NOT_DECLARED)
+            return
+        }
         if (getPermissionState(aliasFor(call)) == PermissionState.GRANTED) {
             dispatch(call)
         } else {
