@@ -15,6 +15,7 @@ class ContactsErrorTests {
         assertEquals("OS-PLUG-CONT-0005", ContactsError.NOT_SUPPORTED.code)
         assertEquals("OS-PLUG-CONT-0006", ContactsError.OPERATION_CANCELLED.code)
         assertEquals("OS-PLUG-CONT-0020", ContactsError.PERMISSION_DENIED.code)
+        assertEquals("OS-PLUG-CONT-0021", ContactsError.PERMISSION_NOT_DECLARED.code)
     }
 
     @Test
