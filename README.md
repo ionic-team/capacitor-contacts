@@ -115,6 +115,7 @@ await Contacts.remove({ id: saved.id! });
 * [`save(...)`](#save)
 * [`remove(...)`](#remove)
 * [`pickContact()`](#pickcontact)
+* [`pickContactField(...)`](#pickcontactfield)
 * [Interfaces](#interfaces)
 * [Type Aliases](#type-aliases)
 
@@ -215,6 +216,31 @@ contact's details.
 **Returns:** <code>Promise&lt;<a href="#contact">Contact</a>&gt;</code>
 
 **Since:** 1.0.0
+
+--------------------
+
+
+### pickContactField(...)
+
+```typescript
+pickContactField(options: PickContactFieldOptions) => Promise<PickedContactField>
+```
+
+Launches the native contact picker UI, showing only the requested kind of
+information, and resolves with the single value the user selects (not a
+full contact). Rejects with `OS-PLUG-CONT-0006` if the user cancels.
+
+Needs no contacts permission on either platform, which lets Android apps
+omit READ_CONTACTS from their manifest. Only one data kind can be picked
+per call.
+
+| Param         | Type                                                                        |
+| ------------- | --------------------------------------------------------------------------- |
+| **`options`** | <code><a href="#pickcontactfieldoptions">PickContactFieldOptions</a></code> |
+
+**Returns:** <code>Promise&lt;<a href="#pickedcontactfield">PickedContactField</a>&gt;</code>
+
+**Since:** 1.1.0
 
 --------------------
 
@@ -341,6 +367,43 @@ Options accepted by {@link ContactsPlugin.remove}.
 | Prop     | Type                | Description                             | Since |
 | -------- | ------------------- | --------------------------------------- | ----- |
 | **`id`** | <code>string</code> | The native id of the contact to remove. | 1.0.0 |
+
+
+#### PickedContactField
+
+The value the user picked with {@link ContactsPlugin.pickContactField}. This is
+not a full contact: it holds only the picked value, its label and the
+contact's display name.
+
+| Prop              | Type                                                                  | Description                                                                                            | Since |
+| ----------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ----- |
+| **`field`**       | <code>'phone' \| 'email' \| 'address'</code>                          | The kind of value that was picked, as requested.                                                       | 1.1.0 |
+| **`value`**       | <code>string</code>                                                   | The picked phone number, email address, or postal address formatted for display, depending on `field`. | 1.1.0 |
+| **`type`**        | <code>string</code>                                                   | The label of the picked value, e.g. `mobile`, `home`, `work`.                                          | 1.1.0 |
+| **`displayName`** | <code>string</code>                                                   | The display name of the contact the value belongs to, when available.                                  | 1.1.0 |
+| **`address`**     | <code><a href="#pickedcontactaddress">PickedContactAddress</a></code> | The parts of the postal address. Only present when `field` is `address`.                               | 1.1.0 |
+
+
+#### PickedContactAddress
+
+The parts of a postal address returned by {@link ContactsPlugin.pickContactField}.
+
+| Prop                | Type                | Description           | Since |
+| ------------------- | ------------------- | --------------------- | ----- |
+| **`streetAddress`** | <code>string</code> | The street address.   | 1.1.0 |
+| **`locality`**      | <code>string</code> | The city or locality. | 1.1.0 |
+| **`region`**        | <code>string</code> | The state or region.  | 1.1.0 |
+| **`postalCode`**    | <code>string</code> | The postal code.      | 1.1.0 |
+| **`country`**       | <code>string</code> | The country.          | 1.1.0 |
+
+
+#### PickContactFieldOptions
+
+Options accepted by {@link ContactsPlugin.pickContactField}.
+
+| Prop        | Type                                         | Description                                                                                       | Since |
+| ----------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----- |
+| **`field`** | <code>'phone' \| 'email' \| 'address'</code> | The single kind of contact information to pick. Any other value rejects with `OS-PLUG-CONT-0001`. | 1.1.0 |
 
 
 ### Type Aliases
