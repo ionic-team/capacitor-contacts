@@ -13,7 +13,8 @@ async function run(label, fn) {
     show(`✅ ${label}`, result ?? 'OK (void)');
     return result;
   } catch (e) {
-    show(`❌ ${label}`, { code: e.code, message: e.message });
+    // Not every error carries a code (or is an Error at all), so say so explicitly.
+    show(`❌ ${label}`, { code: e?.code ?? '(no code)', message: e?.message ?? String(e) });
     return undefined;
   }
 }
@@ -37,6 +38,17 @@ window.testSaveNew = async () => {
         name: { givenName, familyName: 'Lovelace' },
         phoneNumbers: [{ type: 'mobile', value: '+351910000000' }],
         emails: [{ type: 'home', value: 'ada@example.com' }],
+        addresses: [
+          {
+            type: 'home',
+            formatted: '10 Downing Street, London, SW1A 2AA, United Kingdom',
+            streetAddress: '10 Downing Street',
+            locality: 'London',
+            region: 'England',
+            postalCode: 'SW1A 2AA',
+            country: 'United Kingdom',
+          },
+        ],
         birthday: Date.UTC(1815, 11, 10),
       },
     }),
@@ -64,6 +76,11 @@ window.testSaveUpdate = async () => {
 window.testPick = async () => {
   const picked = await run('pickContact', () => Contacts.pickContact());
   if (picked?.id) lastId = picked.id;
+};
+
+window.testPickField = async () => {
+  const field = document.getElementById('pickFieldSelect').value;
+  await run(`pickContactField (${field})`, () => Contacts.pickContactField({ field }));
 };
 
 window.testRemove = async () => {

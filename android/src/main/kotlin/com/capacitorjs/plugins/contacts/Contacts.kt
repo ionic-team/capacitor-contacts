@@ -220,6 +220,71 @@ class Contacts(private val context: Context) {
         return null
     }
 
+    /**
+     * Reads the single data row returned by an `ACTION_PICK` on [kind]'s
+     * data-kind URI into a `pickContactField` result: the picked `value` and
+     * its `type` label, plus the contact's `displayName` when available.
+     * Picking a specific data-kind URI instead of the generic
+     * `Contacts.CONTENT_URI` makes the device's contacts app delegate
+     * temporary read permission on just that row, so no READ_CONTACTS
+     * permission is needed.
+     *
+     * @param kind the data kind that was requested from the picker.
+     * @param pickedUri the URI of the row the contacts app returned.
+     * @return the result with `field`, `value`, `type`, `displayName` (when
+     * known) and, for addresses, `address`; null if the row is gone or holds
+     * no value.
+     * @throws SecurityException if the provider refuses to read the row.
+     */
+    fun readPickedField(kind: ContactPickableField, pickedUri: Uri): JSObject? {
+        val projection = arrayOf(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY) + when (kind) {
+            ContactPickableField.PHONE -> arrayOf(Phone.NUMBER, Phone.TYPE, Phone.LABEL)
+            ContactPickableField.EMAIL -> arrayOf(Email.ADDRESS, Email.TYPE, Email.LABEL)
+            ContactPickableField.ADDRESS -> arrayOf(
+                StructuredPostal.FORMATTED_ADDRESS, StructuredPostal.STREET, StructuredPostal.CITY,
+                StructuredPostal.REGION, StructuredPostal.POSTCODE, StructuredPostal.COUNTRY,
+                StructuredPostal.TYPE, StructuredPostal.LABEL
+            )
+        }
+
+        context.contentResolver.query(pickedUri, projection, null, null, null)?.use { cursor ->
+            if (!cursor.moveToFirst()) return null
+            fun str(name: String): String? {
+                val i = cursor.getColumnIndex(name)
+                return if (i >= 0) cursor.getString(i) else null
+            }
+            fun int(name: String): Int {
+                val i = cursor.getColumnIndex(name)
+                return if (i >= 0) cursor.getInt(i) else -1
+            }
+
+            val result = JSObject()
+            result.put("field", kind.key)
+            when (kind) {
+                ContactPickableField.PHONE -> {
+                    result.put("value", str(Phone.NUMBER) ?: return null)
+                    result.put("type", phoneLabel(int(Phone.TYPE), str(Phone.LABEL)))
+                }
+
+                ContactPickableField.EMAIL -> {
+                    result.put("value", str(Email.ADDRESS) ?: return null)
+                    result.put("type", emailLabel(int(Email.TYPE), str(Email.LABEL)))
+                }
+
+                ContactPickableField.ADDRESS -> {
+                    result.put("value", str(StructuredPostal.FORMATTED_ADDRESS) ?: return null)
+                    result.put("type", addressLabel(int(StructuredPostal.TYPE), str(StructuredPostal.LABEL)))
+                    val address = JSObject()
+                    putAddressParts(address, ::str)
+                    result.put("address", address)
+                }
+            }
+            str(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY)?.let { result.put("displayName", it) }
+            return result
+        }
+        return null
+    }
+
     private fun wants(field: String, desiredFields: Set<String>): Boolean =
         desiredFields.isEmpty() || desiredFields.contains(field)
 
@@ -307,11 +372,7 @@ class Contacts(private val context: Context) {
                         address.put("pref", pref)
                         address.put("type", addressLabel(int(StructuredPostal.TYPE), str(StructuredPostal.LABEL)))
                         address.put("formatted", str(StructuredPostal.FORMATTED_ADDRESS))
-                        address.put("streetAddress", str(StructuredPostal.STREET))
-                        address.put("locality", str(StructuredPostal.CITY))
-                        address.put("region", str(StructuredPostal.REGION))
-                        address.put("postalCode", str(StructuredPostal.POSTCODE))
-                        address.put("country", str(StructuredPostal.COUNTRY))
+                        putAddressParts(address, ::str)
                         addresses.put(address)
                     }
 
@@ -399,6 +460,21 @@ class Contacts(private val context: Context) {
             if (!desiredFields.contains("birthday")) contact.remove("birthday")
         }
         return contact
+    }
+
+    /**
+     * Puts the postal parts of a StructuredPostal row into [address].
+     *
+     * @param address the object to fill with `streetAddress`, `locality`,
+     * `region`, `postalCode` and `country`.
+     * @param str reads a column of the current row, null when it has no value.
+     */
+    private fun putAddressParts(address: JSObject, str: (String) -> String?) {
+        address.put("streetAddress", str(StructuredPostal.STREET))
+        address.put("locality", str(StructuredPostal.CITY))
+        address.put("region", str(StructuredPostal.REGION))
+        address.put("postalCode", str(StructuredPostal.POSTCODE))
+        address.put("country", str(StructuredPostal.COUNTRY))
     }
 
     private fun field(id: String?, value: String?, type: String?, pref: Boolean): JSObject {
