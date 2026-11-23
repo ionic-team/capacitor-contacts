@@ -38,8 +38,9 @@ Notes:
 - The plugin uses the modern **Contacts framework** (`CNContactStore`,
   never the deprecated AddressBook APIs), so it fully supports iOS 18+
   **Limited Access**: `find`, `save` and `remove` operate on the subset the
-  user shared with the app, and `pickContact` presents the system picker
-  (which needs no permission and always shows the full contact list).
+  user shared with the app, while `pickContact` and `pickContactField` present
+  the system picker (which needs no permission and always shows the full
+  contact list).
 - The `note` field is not supported on iOS: reading or writing it requires
   Apple's restricted `com.apple.developer.contacts.notes` entitlement. The
   field is omitted on read and ignored on save.
