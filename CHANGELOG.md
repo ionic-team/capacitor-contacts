@@ -1,3 +1,15 @@
+# [2.0.0-next.2](https://github.com/ionic-team/capacitor-contacts/compare/v2.0.0-next.1...v2.0.0-next.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* **android:** avoid implicit parent project property lookup deprecated in Gradle 9 ([#11](https://github.com/ionic-team/capacitor-contacts/issues/11)) ([ed4490e](https://github.com/ionic-team/capacitor-contacts/commit/ed4490e72831b36d30f195f1f817b996c456774d))
+
+
+### Features
+
+* add pickContactField to avoid contacts permissions on Android ([#12](https://github.com/ionic-team/capacitor-contacts/issues/12)) ([b74d0f3](https://github.com/ionic-team/capacitor-contacts/commit/b74d0f34e31bd8ec7e69512a80a9901ea71599a6))
+
 # [2.0.0-next.1](https://github.com/ionic-team/capacitor-contacts/compare/v1.0.2-next.1...v2.0.0-next.1) (2026-11-05)
 
 
