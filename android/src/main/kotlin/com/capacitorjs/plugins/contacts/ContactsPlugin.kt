@@ -3,6 +3,7 @@ package com.capacitorjs.plugins.contacts
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.provider.ContactsContract
 import com.getcapacitor.JSObject
 import com.getcapacitor.PermissionState
@@ -23,7 +24,14 @@ import java.util.concurrent.Executors
  * Permission model is **implicit**: there are no `checkPermissions` /
  * `requestPermissions` methods. Each method ensures the permission it needs
  * before touching the provider: read for `find`/`pickContact`, read+write
- * for `save`/`remove`. All provider work runs off the main thread.
+ * for `save`/`remove`. `pickContactField` is the exception and needs no
+ * permission: it runs `ACTION_PICK` on a single data-kind URI (phone, email
+ * or address) instead of the generic `Contacts.CONTENT_URI`, which makes the
+ * device's contacts app delegate temporary read permission on just the
+ * selected row. On Android 17+ the system routes the same intent to the new
+ * Contacts Picker, so no API-level branching is needed. The tradeoff is that
+ * only one data kind can be picked per call. All provider work runs off the
+ * main thread.
  */
 @CapacitorPlugin(
     name = "Contacts",
@@ -175,14 +183,55 @@ class ContactsPlugin : Plugin() {
     private var pickInProgress = false
 
     private fun runPickContact(call: PluginCall) {
+        startPicker(call, Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI), "pickContactResult")
+    }
+
+    @ActivityCallback
+    private fun pickContactResult(call: PluginCall?, result: androidx.activity.result.ActivityResult) {
+        handlePickResult(call, result) { uri -> uri.lastPathSegment?.let { implementation.getContactById(it) } }
+    }
+
+    // ------------------------------------------------------------------
+    // pickContactField
+    // ------------------------------------------------------------------
+
+    @PluginMethod
+    fun pickContactField(call: PluginCall) {
+        val field = ContactPickableField.fromKey(call.getString("field"))
+        if (field == null) {
+            reject(call, ContactsError.INVALID_ARGUMENT)
+            return
+        }
+        startPicker(call, Intent(Intent.ACTION_PICK, field.contentUri), "pickContactFieldResult")
+    }
+
+    @ActivityCallback
+    private fun pickContactFieldResult(call: PluginCall?, result: androidx.activity.result.ActivityResult) {
+        val field = ContactPickableField.fromKey(call?.getString("field"))
+        handlePickResult(call, result) { uri -> field?.let { implementation.readPickedField(it, uri) } }
+    }
+
+    // ------------------------------------------------------------------
+    // Shared picker flow
+    // ------------------------------------------------------------------
+
+    /**
+     * Launches [intent] for [call], rejecting with `PENDING_OPERATION` if
+     * another picker is on screen and with `NOT_SUPPORTED` if no activity can
+     * handle [intent].
+     *
+     * @param call the call to resolve once the picker returns.
+     * @param intent the `ACTION_PICK` intent to launch.
+     * @param callbackName name of the `@ActivityCallback` that receives the result.
+     */
+    private fun startPicker(call: PluginCall, intent: Intent, callbackName: String) {
         if (pickInProgress) {
             reject(call, ContactsError.PENDING_OPERATION)
             return
         }
         pickInProgress = true
-        val intent = Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI)
         try {
-            startActivityForResult(call, intent, "pickContactResult")
+            startActivityForResult(call, intent, callbackName)
         } catch (e: Exception) {
             // No contacts app / picker activity on this device.
             pickInProgress = false
@@ -190,22 +239,35 @@ class ContactsPlugin : Plugin() {
         }
     }
 
-    @ActivityCallback
-    private fun pickContactResult(call: PluginCall?, result: androidx.activity.result.ActivityResult) {
+    /**
+     * Resolves [call] with what [read] returns for the picked URI, or rejects
+     * on cancel or failure. [read] runs on the executor, so it may query the
+     * provider.
+     *
+     * @param call the call that started the picker, null if it was lost.
+     * @param result the picker's activity result.
+     * @param read turns the picked URI into the result, null if it holds no data.
+     */
+    private fun handlePickResult(
+        call: PluginCall?,
+        result: androidx.activity.result.ActivityResult,
+        read: (Uri) -> JSObject?
+    ) {
         pickInProgress = false
         if (call == null) return
         when (result.resultCode) {
             Activity.RESULT_OK -> {
                 val uri = result.data?.data
-                val contactId = uri?.lastPathSegment
-                if (contactId == null) {
+                if (uri == null) {
                     reject(call, ContactsError.UNKNOWN)
                     return
                 }
                 executor.execute {
                     try {
-                        val contact = implementation.getContactById(contactId)
+                        val contact = read(uri)
                         if (contact != null) call.resolve(contact) else reject(call, ContactsError.UNKNOWN)
+                    } catch (e: SecurityException) {
+                        reject(call, ContactsError.PERMISSION_DENIED, e)
                     } catch (e: Exception) {
                         reject(call, ContactsError.UNKNOWN, e)
                     }
@@ -226,8 +288,15 @@ class ContactsPlugin : Plugin() {
         else -> READ
     }
 
-    /** Ensures the method's permission alias, then dispatches the saved call. */
+    /**
+     * Rejects with `PERMISSION_NOT_DECLARED` if the manifest lacks the method's permissions,
+     * otherwise ensures its permission alias and dispatches the saved call.
+     */
     private fun ensurePermission(call: PluginCall) {
+        if (!isPermissionDeclared(aliasFor(call))) {
+            reject(call, ContactsError.PERMISSION_NOT_DECLARED)
+            return
+        }
         if (getPermissionState(aliasFor(call)) == PermissionState.GRANTED) {
             dispatch(call)
         } else {

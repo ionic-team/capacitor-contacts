@@ -7,6 +7,8 @@ import type {
   ContactRemoveOptions,
   ContactSaveOptions,
   ContactsPlugin,
+  PickContactFieldOptions,
+  PickedContactField,
 } from './definitions';
 
 /**
@@ -30,5 +32,9 @@ export class ContactsWeb extends WebPlugin implements ContactsPlugin {
 
   async pickContact(): Promise<Contact> {
     throw this.unimplemented('Contacts.pickContact() is not available on web.');
+  }
+
+  async pickContactField(_options: PickContactFieldOptions): Promise<PickedContactField> {
+    throw this.unimplemented('Contacts.pickContactField() is not available on web.');
   }
 }

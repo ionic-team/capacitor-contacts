@@ -52,6 +52,19 @@ export interface ContactsPlugin {
    * @since 1.0.0
    */
   pickContact(): Promise<Contact>;
+
+  /**
+   * Launches the native contact picker UI, showing only the requested kind of
+   * information, and resolves with the single value the user selects (not a
+   * full contact). Rejects with `OS-PLUG-CONT-0006` if the user cancels.
+   *
+   * Needs no contacts permission on either platform, which lets Android apps
+   * omit READ_CONTACTS from their manifest. Only one data kind can be picked
+   * per call.
+   *
+   * @since 1.1.0
+   */
+  pickContactField(options: PickContactFieldOptions): Promise<PickedContactField>;
 }
 
 /**
@@ -516,4 +529,106 @@ export interface ContactOrganization {
    * @since 1.0.0
    */
   title?: string;
+}
+
+/**
+ * Options accepted by {@link ContactsPlugin.pickContactField}.
+ *
+ * @since 1.1.0
+ */
+export interface PickContactFieldOptions {
+  /**
+   * The single kind of contact information to pick. Any other value
+   * rejects with `OS-PLUG-CONT-0001`.
+   *
+   * @since 1.1.0
+   */
+  field: 'phone' | 'email' | 'address';
+}
+
+/**
+ * The value the user picked with {@link ContactsPlugin.pickContactField}. This is
+ * not a full contact: it holds only the picked value, its label and the
+ * contact's display name.
+ *
+ * @since 1.1.0
+ */
+export interface PickedContactField {
+  /**
+   * The kind of value that was picked, as requested.
+   *
+   * @since 1.1.0
+   */
+  field: 'phone' | 'email' | 'address';
+
+  /**
+   * The picked phone number, email address, or postal address formatted for
+   * display, depending on `field`.
+   *
+   * @since 1.1.0
+   */
+  value: string;
+
+  /**
+   * The label of the picked value, e.g. `mobile`, `home`, `work`.
+   *
+   * @since 1.1.0
+   */
+  type: string;
+
+  /**
+   * The display name of the contact the value belongs to, when available.
+   *
+   * @since 1.1.0
+   */
+  displayName?: string;
+
+  /**
+   * The parts of the postal address. Only present when `field` is `address`.
+   *
+   * @since 1.1.0
+   */
+  address?: PickedContactAddress;
+}
+
+/**
+ * The parts of a postal address returned by {@link ContactsPlugin.pickContactField}.
+ *
+ * @since 1.1.0
+ */
+export interface PickedContactAddress {
+  /**
+   * The street address.
+   *
+   * @since 1.1.0
+   */
+  streetAddress?: string;
+
+  /**
+   * The city or locality.
+   *
+   * @since 1.1.0
+   */
+  locality?: string;
+
+  /**
+   * The state or region.
+   *
+   * @since 1.1.0
+   */
+  region?: string;
+
+  /**
+   * The postal code.
+   *
+   * @since 1.1.0
+   */
+  postalCode?: string;
+
+  /**
+   * The country.
+   *
+   * @since 1.1.0
+   */
+  country?: string;
 }
